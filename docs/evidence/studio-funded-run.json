@@ -1,0 +1,65 @@
+{
+  "network": "studionet",
+  "contract": "0x27b3cC58eE16499EEFcdc593e8300D973a608abF",
+  "jobId": "proofdesk-funded-1788959182716",
+  "budgetWei": "100",
+  "transactions": {
+    "create_brief": {
+      "hash": "0x122ec78155510940341990960fbfe1e0df97ab9b69d13d9a6da1ad75ae5c47ea",
+      "complete": true
+    },
+    "submit_report": {
+      "hash": "0x6e2d2c4cff1f6ad69043a804f394a83ad5dc02bb4f75ea00fe95c22aac4c57c4",
+      "complete": true
+    },
+    "review_report": {
+      "hash": "0xf75920155198ba52c0916a79e1d48ebef2601d45924ecf30addc47c6ac85b6d2",
+      "complete": true
+    },
+    "claim_payout": {
+      "hash": "0x756a38aad436741045036dcc3ad3378ebe15fb93dde5ae215be46ecf347af346",
+      "complete": true
+    }
+  },
+  "record": {
+    "bounty_wei": "100",
+    "claims": [
+      {
+        "text": "SQLite states that its deliverable library is in the public domain and does not require a license.",
+        "url": "https://www.sqlite.org/copyright.html"
+      }
+    ],
+    "created_at": 1788959186,
+    "deadline": 1789563986,
+    "id": "proofdesk-funded-1788959182716",
+    "owner": "0x268630ca6f29a8f77c26bff00dee596fc362b26a",
+    "paid": true,
+    "requirements": [
+      "State whether the SQLite library requires a paid license."
+    ],
+    "researcher": "0x268630ca6f29a8f77c26bff00dee596fc362b26a",
+    "review": {
+      "claims": [
+        {
+          "quote": "SQLite is in the public domain and does not require a license.",
+          "reason": "The source explicitly states that the deliverable SQLite library is in the public domain and does not require a license, directly matching the claim.",
+          "verdict": "supported"
+        }
+      ],
+      "criteria": [
+        {
+          "reason": "The claim explicitly states 'SQLite states that its deliverable library is in the public domain and does not require a license,' directly answering whether a paid license is required (it is not).",
+          "verdict": "met"
+        }
+      ],
+      "decision": "approved"
+    },
+    "revision": 1,
+    "status": "paid",
+    "title": "Verify SQLite licensing with a funded test"
+  },
+  "balanceAfterDeposit": "999900",
+  "balanceAfterPayout": "1000000",
+  "transferObserved": true,
+  "note": "Simulator test units only. Does not establish Bradbury transfer behavior."
+}

@@ -1,0 +1,150 @@
+{
+  "network": "studionet",
+  "contract": "0x27b3cC58eE16499EEFcdc593e8300D973a608abF",
+  "testAccount": "0x268630cA6f29A8f77C26BFF00DEE596fc362B26A",
+  "jobId": "proofdesk-demo-1788958449108",
+  "transactions": {
+    "create": {
+      "hash": "0x8f697e30d3a63a8992cc68c82f3a4bcd5ef0922a03a4161349cb13f3e0b1e833",
+      "complete": true,
+      "status": 7
+    },
+    "submit-incorrect": {
+      "hash": "0xb33e2616a40d0220111e097dc302daf2dc3db0154d7dac78352fcabd387b3059",
+      "complete": true,
+      "status": 7
+    },
+    "review-incorrect": {
+      "hash": "0x3c47540872b6cc4e7b72cdfb58d46fa6dbbba5c6610bd8915c885f028916e68f",
+      "complete": true,
+      "status": 7
+    },
+    "submit-corrected": {
+      "hash": "0x055c7d5f10cb98e6443904e12eff07c0888c75eddac46ccb16109af9b0265517",
+      "complete": true,
+      "status": 7
+    },
+    "review-corrected": {
+      "hash": "0x2bc336102814baf4be333624339b7453ed954ca9063dd2ad5819e01f5400f8fa",
+      "complete": true,
+      "status": 7
+    },
+    "claim-zero-budget": {
+      "hash": "0x236e69d20dfb7850c2ffcd2e4a93436d165b88c62b24803ffeac929e0cf7caf7",
+      "complete": true,
+      "status": 7
+    }
+  },
+  "incorrect": {
+    "bounty_wei": "0",
+    "claims": [
+      {
+        "text": "The SQLite deliverable library requires a paid license for commercial use.",
+        "url": "https://www.sqlite.org/copyright.html"
+      }
+    ],
+    "created_at": 1788958452,
+    "deadline": 1789563252,
+    "id": "proofdesk-demo-1788958449108",
+    "owner": "0x268630ca6f29a8f77c26bff00dee596fc362b26a",
+    "paid": false,
+    "requirements": [
+      "State whether the SQLite deliverable library requires a paid commercial license."
+    ],
+    "researcher": "0x268630ca6f29a8f77c26bff00dee596fc362b26a",
+    "review": {
+      "claims": [
+        {
+          "quote": "SQLite is in the public domain and does not require a license.",
+          "reason": "Source states SQLite is public domain and free for any commercial use without requiring a license, directly conflicting with the claim.",
+          "verdict": "contradicted"
+        }
+      ],
+      "criteria": [
+        {
+          "reason": "The SQLite deliverable library requires a paid license for commercial use.",
+          "verdict": "met"
+        }
+      ],
+      "decision": "needs_revision"
+    },
+    "revision": 1,
+    "status": "needs_revision",
+    "title": "Check the SQLite commercial license"
+  },
+  "corrected": {
+    "bounty_wei": "0",
+    "claims": [
+      {
+        "text": "SQLite states that its deliverable library is in the public domain and does not require a license.",
+        "url": "https://www.sqlite.org/copyright.html"
+      }
+    ],
+    "created_at": 1788958452,
+    "deadline": 1789563252,
+    "id": "proofdesk-demo-1788958449108",
+    "owner": "0x268630ca6f29a8f77c26bff00dee596fc362b26a",
+    "paid": false,
+    "requirements": [
+      "State whether the SQLite deliverable library requires a paid commercial license."
+    ],
+    "researcher": "0x268630ca6f29a8f77c26bff00dee596fc362b26a",
+    "review": {
+      "claims": [
+        {
+          "quote": "SQLite is in the public domain and does not require a license.",
+          "reason": "The source explicitly states that SQLite is in the public domain and does not require a license, which directly matches the claim about its deliverable library.",
+          "verdict": "supported"
+        }
+      ],
+      "criteria": [
+        {
+          "reason": "The claim explicitly states that the SQLite deliverable library is in the public domain and does not require a license, which directly answers whether a paid commercial license is required.",
+          "verdict": "met"
+        }
+      ],
+      "decision": "approved"
+    },
+    "revision": 2,
+    "status": "approved",
+    "title": "Check the SQLite commercial license"
+  },
+  "final": {
+    "bounty_wei": "0",
+    "claims": [
+      {
+        "text": "SQLite states that its deliverable library is in the public domain and does not require a license.",
+        "url": "https://www.sqlite.org/copyright.html"
+      }
+    ],
+    "created_at": 1788958452,
+    "deadline": 1789563252,
+    "id": "proofdesk-demo-1788958449108",
+    "owner": "0x268630ca6f29a8f77c26bff00dee596fc362b26a",
+    "paid": true,
+    "requirements": [
+      "State whether the SQLite deliverable library requires a paid commercial license."
+    ],
+    "researcher": "0x268630ca6f29a8f77c26bff00dee596fc362b26a",
+    "review": {
+      "claims": [
+        {
+          "quote": "SQLite is in the public domain and does not require a license.",
+          "reason": "The source explicitly states that SQLite is in the public domain and does not require a license, which directly matches the claim about its deliverable library.",
+          "verdict": "supported"
+        }
+      ],
+      "criteria": [
+        {
+          "reason": "The claim explicitly states that the SQLite deliverable library is in the public domain and does not require a license, which directly answers whether a paid commercial license is required.",
+          "verdict": "met"
+        }
+      ],
+      "decision": "approved"
+    },
+    "revision": 2,
+    "status": "paid",
+    "title": "Check the SQLite commercial license"
+  },
+  "notes": "Zero-budget integration. No token transfer was tested."
+}

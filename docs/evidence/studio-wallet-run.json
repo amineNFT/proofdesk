@@ -1,0 +1,44 @@
+{
+  "network": "studionet",
+  "contract": "0x27b3cC58eE16499EEFcdc593e8300D973a608abF",
+  "jobId": "proofdesk-wallet-1789044567093",
+  "validation": "Actual app wallet client with an EIP-1193 test signer; no browser extension UI was exercised.",
+  "completedAt": "2026-09-10T12:51:36.375Z",
+  "methods": [
+    "eth_requestAccounts",
+    "eth_chainId",
+    "eth_accounts",
+    "eth_sendTransaction"
+  ],
+  "steps": {
+    "create_brief": {
+      "hash": "0x4a80a59ae1e8aa436791f4d70a80ba825f0d53c76843de6bd4931ef8b6a873b6",
+      "finalized": true
+    },
+    "submit_report": {
+      "hash": "0xdb3e55ae6a9ae157b17f04dd3b71f6a1e61a5e7fba68aa2d8c994cc71aac4aa2",
+      "finalized": true
+    },
+    "review_report": {
+      "hash": "0x0c5cb4190ca4e39e2a41c6e01bd358c3a16df16ea562b3a4b4d78c89c3141e09",
+      "finalized": true
+    }
+  },
+  "status": "approved",
+  "review": {
+    "claims": [
+      {
+        "quote": "Anyone is free to copy, modify, publish, use, compile, sell, or distribute the original SQLite code, either in source code form or as a compiled binary, for any purpose, commercial or non-commercial, and by any means. The previous paragraph applies to the deliverable code and documentation in SQLite",
+        "reason": "The source explicitly states that the deliverable code in SQLite is dedicated to the public domain and may be used commercially without restriction, directly supporting the claim.",
+        "verdict": "supported"
+      }
+    ],
+    "criteria": [
+      {
+        "reason": "The claim directly explains that SQLite's deliverable library is public domain and may be used commercially without purchasing a license, fully addressing whether a paid license is required for commercial use.",
+        "verdict": "met"
+      }
+    ],
+    "decision": "approved"
+  }
+}

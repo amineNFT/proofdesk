@@ -57,6 +57,15 @@ def test_fabricated_quote_cannot_support_claim(desk, direct_vm, direct_bob):
     desk.review_report("test-001")
     assert state(desk)["status"] == "inconclusive"
 
+def test_punctuation_differences_do_not_lose_evidence(desk, direct_vm, direct_bob):
+    # Each validator rewrites the passage it quotes, so case and punctuation
+    # vary between runs. Only an invented passage is rejected; a real one must
+    # still count, or a verdict flips to insufficient and stalls consensus.
+    submit(desk, direct_vm, direct_bob)
+    mock_review(direct_vm, quote="ALL OF THE CODE, AND DOCUMENTATION, IN SQLITE HAS BEEN DEDICATED TO THE PUBLIC DOMAIN")
+    desk.review_report("test-001")
+    assert state(desk)["status"] == "approved"
+
 def test_scope_omission_blocks_payment(desk, direct_vm, direct_bob):
     submit(desk, direct_vm, direct_bob)
     mock_review(direct_vm, scope="unmet")

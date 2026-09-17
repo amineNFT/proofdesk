@@ -37,6 +37,15 @@ def _plain(value: str) -> str:
     value = re.sub(r"<(script|style)\b[^>]*>.*?</\1>", " ", value, flags=re.S | re.I)
     return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", value)).split())
 
+def _quote_key(value: str) -> str:
+    """Case, punctuation and whitespace differ between model runs. Compare words.
+
+    The passage still has to come from the retrieved source, so an invented
+    quote is rejected exactly as before; a real one no longer collapses to
+    "insufficient" because a run wrote a dash where the page wrote a comma.
+    """
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
+
 def _decision(claims: list, criteria: list) -> str:
     if any(c["verdict"] == "contradicted" for c in claims) or any(c["verdict"] == "unmet" for c in criteria):
         return "needs_revision"
@@ -194,7 +203,7 @@ INPUT_JSON: """ + json.dumps({"claim": claim["text"], "source": source})
                 reason = str(raw.get("reason", "Evidence is insufficient."))[:600]
                 if verdict not in ("supported", "contradicted", "insufficient"):
                     verdict = "insufficient"
-                if verdict != "insufficient" and (len(quote) < 12 or quote not in source):
+                if verdict != "insufficient" and (len(quote) < 12 or _quote_key(quote) not in _quote_key(source)):
                     verdict, quote, reason = "insufficient", "", "The reviewer did not supply a verifiable source passage."
                 results.append({"verdict": verdict, "quote": quote, "reason": reason})
             requirements = json.loads(requirements_json)

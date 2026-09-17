@@ -73,6 +73,26 @@ def test_independent_validator_rejects_disagreement(desk, direct_vm, direct_bob)
     mock_review(direct_vm, "contradicted")
     assert direct_vm.run_validator() is False
 
+def test_validator_agrees_when_it_only_reaches_inconclusive(desk, direct_vm, direct_bob):
+    # Every validator re-fetches the source and asks the model again. A
+    # paraphrase that reads as insufficient must not stall consensus, or the
+    # round ends Undetermined and no review is ever recorded.
+    submit(desk, direct_vm, direct_bob)
+    mock_review(direct_vm)
+    desk.review_report("test-001")
+    assert state(desk)["status"] == "approved"
+    direct_vm.clear_mocks()
+    mock_review(direct_vm, "insufficient")
+    assert direct_vm.run_validator() is True
+
+def test_unmet_criterion_still_stops_agreement(desk, direct_vm, direct_bob):
+    submit(desk, direct_vm, direct_bob)
+    mock_review(direct_vm)
+    desk.review_report("test-001")
+    direct_vm.clear_mocks()
+    mock_review(direct_vm, "supported", scope="unmet")
+    assert direct_vm.run_validator() is False
+
 def test_unauthorized_submit_and_review(desk, direct_vm, direct_charlie):
     with direct_vm.prank(direct_charlie), direct_vm.expect_revert("Only the assigned researcher"):
         desk.submit_report("test-001", "[]")

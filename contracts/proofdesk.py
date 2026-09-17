@@ -1,8 +1,10 @@
 # { "Depends": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng" }
 """ProofDesk: bounded, source-grounded research review and testnet escrow.
 
-Each validator fetches evidence and judges independently. Only decision fields
-must match. Missing evidence never counts as support. See docs/ARCHITECTURE.md.
+Each validator fetches evidence and judges independently. Blocking verdicts -
+contradicted claims and unmet criteria - must match exactly; a validator that
+only reaches "inconclusive" does not overturn an approval. Missing evidence never
+counts as support. See docs/ARCHITECTURE.md.
 """
 import genlayer as gl
 import json
@@ -42,9 +44,27 @@ def _decision(claims: list, criteria: list) -> str:
         return "approved"
     return "inconclusive"
 
-def _fingerprint(result: dict) -> tuple:
-    return (result["decision"], tuple(c["verdict"] for c in result["claims"]),
-            tuple(c["verdict"] for c in result["criteria"]))
+def _blockers(result: dict) -> tuple:
+    """Verdicts that decide who may be paid. These are never a matter of opinion."""
+    return (tuple(c["verdict"] for c in result["claims"] if c["verdict"] == "contradicted"),
+            tuple(c["verdict"] for c in result["criteria"] if c["verdict"] == "unmet"))
+
+def _equivalent(leader: dict, independent: dict) -> bool:
+    """Whether an independent review is equivalent to the leader's.
+
+    Blocking verdicts must match exactly: a contradicted claim or an unmet
+    criterion changes who may be paid, so disagreement there always stops the
+    round. Otherwise a validator that could only reach "inconclusive" does not
+    overturn the leader's approval. Every validator re-fetches the source and
+    asks the model again, so requiring identical per-claim verdicts made
+    consensus fail whenever a passage was paraphrased or read slightly
+    differently: the round ended Undetermined and no review was recorded at all.
+    """
+    if _blockers(leader) != _blockers(independent):
+        return False
+    if leader["decision"] == independent["decision"]:
+        return True
+    return {leader["decision"], independent["decision"]} <= {"approved", "inconclusive"}
 
 @gl.evm.contract_interface
 class _Recipient:
@@ -201,7 +221,7 @@ INPUT_JSON: """ + json.dumps({"title": title, "criteria": requirements, "claims"
                 return False
             # Validators perform their own source fetches and LLM assessments.
             independent = evaluate()
-            return _fingerprint(independent) == _fingerprint(leader.calldata)
+            return _equivalent(leader.calldata, independent)
 
         review = gl.vm.run_nondet(evaluate, validate)
         job["review"] = review

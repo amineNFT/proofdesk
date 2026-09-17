@@ -18,7 +18,7 @@ The requester writes acceptance criteria, assigns a researcher, and optionally d
 
 ## Why GenLayer
 
-The contested decision is whether natural-language research satisfies a brief and is supported by external evidence. Ordinary deterministic checks can validate a URL or match a quote, but do not establish whether the quote supports a claim. A centralized model would leave the buyer and researcher trusting one operator's judgment. GenLayer validators independently fetch and interpret the evidence, then apply a custom Equivalence Principle to the decision fields.
+The contested decision is whether natural-language research satisfies a brief and is supported by external evidence. Ordinary deterministic checks can validate a URL or match a quote, but do not establish whether the quote supports a claim. A centralized model would leave the buyer and researcher trusting one operator's judgment. GenLayer validators independently fetch and interpret the evidence, then apply a custom Equivalence Principle to their own result: a contradicted claim or an unmet criterion must match the leader's exactly, since those decide who may be paid, while a validator that only reaches "inconclusive" does not overturn an approval. Consensus on the blocking verdicts is what makes the payment decision decentralized; identical per-claim wording is not required.
 
 ## Demonstration
 

@@ -10,12 +10,12 @@ import {
 const address = '0x1111111111111111111111111111111111111111';
 const other = '0x2222222222222222222222222222222222222222';
 const chain = {
-  id: 61999,
-  name: 'GenLayer Studio',
-  rpcUrls: { default: { http: ['https://studio.genlayer.com/api'] } },
+  id: 61997,
+  name: 'GenLayer Studio Next',
+  rpcUrls: { default: { http: ['https://studio-dev.genlayer.com/api'] } },
   nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
 };
-function fixture(initialChain = '0xf22f', unknown = false) {
+function fixture(initialChain = '0xf22d', unknown = false) {
   const calls: string[] = [];
   const state = {
     chain: initialChain,

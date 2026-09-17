@@ -59,6 +59,9 @@ import {
 } from '@/lib/chain';
 import deployment from '@/lib/deployment.json';
 import { FinalizedFailure } from '@/lib/receipt';
+import { feeUsage, type FeeUsage } from '@/lib/fees';
+import { FeeReceipt, formatGen } from '@genlayer/transaction-kit-react';
+import type { PolicyQuote } from '@genlayer/transaction-kit';
 import { registerDeskTools } from '@/lib/webmcp';
 
 const CONFIG_KEY = 'proofdesk:network:v1',
@@ -75,6 +78,19 @@ const short = (value: string) =>
   validAddress(value)
     ? `${value.slice(0, 6)}…${value.slice(-4)}`
     : value || 'Not assigned';
+
+/** Deposit, consumed and refunded totals stay separate in the pending panel. */
+function feeUsageLine(usage: FeeUsage): string {
+  const part = (label: string, value: string | undefined) =>
+    value === undefined ? '' : `${label} ${formatGen(BigInt(value))} GEN`;
+  return [
+    part('Deposit', usage.deposit),
+    part('Consumed', usage.consumed),
+    part('Refunded', usage.refunded),
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
 function Badge({ status }: { status: string }) {
   return (
     <span className={`status ${status}`}>
@@ -110,6 +126,8 @@ export default function ProofDesk() {
   const [error, setError] = useState('');
   const [ready, setReady] = useState(false);
   const [pending, setPending] = useState<Pending | null>(null);
+  const [feeQuote, setFeeQuote] = useState<PolicyQuote | null>(null);
+  const [feeUsed, setFeeUsed] = useState<FeeUsage | null>(null);
   const [more, setMore] = useState(false);
   const [history, setHistory] = useState<Job[]>([]);
   const [reports, setReports] = useState<Record<string, Claim[]>>({});
@@ -147,7 +165,7 @@ export default function ProofDesk() {
         if (network) {
           const c = JSON.parse(network);
           if (
-            ['studionet', 'testnetBradbury'].includes(c.network) &&
+            ['studioDevnet', 'testnetBradbury'].includes(c.network) &&
             (!c.contract || validAddress(c.contract))
           )
             setConfig(c);
@@ -157,7 +175,7 @@ export default function ProofDesk() {
           const p = JSON.parse(current);
           if (
             /^0x[a-fA-F0-9]{64}$/.test(p.hash) &&
-            ['studionet', 'testnetBradbury'].includes(p.config?.network)
+            ['studioDevnet', 'testnetBradbury'].includes(p.config?.network)
           )
             setPending(p);
         }
@@ -325,6 +343,9 @@ export default function ProofDesk() {
       if (e instanceof FinalizedFailure) setPending(null);
       throw e;
     }
+    // Deposit, consumed and refunded amounts are reported separately once the
+    // transaction finalizes; report nothing rather than guessing when absent.
+    setFeeUsed(feeUsage(receipt) ?? null);
     if (p.action === 'deploy') {
       const address =
         receipt.data?.contract_address ??
@@ -370,7 +391,14 @@ export default function ProofDesk() {
       throw new Error(
         'Track the pending transaction before submitting another.',
       );
-    const hash = await send(config, walletSession(), action, args, value);
+    const hash = await send(
+      config,
+      walletSession(),
+      action,
+      args,
+      value,
+      setFeeQuote,
+    );
     const p: Pending = {
       hash,
       action,
@@ -475,8 +503,8 @@ export default function ProofDesk() {
         </div>
         <div className="workspace-bar">
           <div>
-            {config.network === 'studionet'
-              ? 'GenLayer Studio'
+            {config.network === 'studioDevnet'
+              ? 'GenLayer Studio Next'
               : 'Bradbury testnet'}
             <span className="bar-divider">·</span>
             <span>
@@ -522,6 +550,10 @@ export default function ProofDesk() {
               <p>
                 Keep this ID. A timeout does not mean the transaction failed.
               </p>
+              {feeQuote && (
+                <FeeReceipt quote={feeQuote} busy={Boolean(busy)} />
+              )}
+              {feeUsed && <p>{feeUsageLine(feeUsed)}</p>}
             </div>
             <Button
               variant="outline"
@@ -1204,6 +1236,8 @@ export default function ProofDesk() {
               setWallet('');
               setJobs((prev) => prev.filter((j) => j.origin !== 'chain'));
               setSelected('');
+              setFeeQuote(null);
+              setFeeUsed(null);
               setModal(null);
               setNotice(
                 'Network settings saved. Load network briefs to fetch records.',
@@ -1213,7 +1247,7 @@ export default function ProofDesk() {
               run('Deploying ProofDesk', async () => {
                 if (pending)
                   throw new Error('Track the pending transaction first.');
-                const hash = await deploy(next, walletSession());
+                const hash = await deploy(next, walletSession(), setFeeQuote);
                 const p: Pending = { hash, action: 'deploy', config: next };
                 setPending(p);
                 localStorage.setItem(PENDING_KEY, JSON.stringify(p));
@@ -1564,7 +1598,7 @@ function NetworkForm({
         }
       >
         <TabsList>
-          <TabsTrigger value="studionet">Studio</TabsTrigger>
+          <TabsTrigger value="studioDevnet">Studio Next</TabsTrigger>
           <TabsTrigger value="testnetBradbury">Bradbury testnet</TabsTrigger>
         </TabsList>
       </Tabs>

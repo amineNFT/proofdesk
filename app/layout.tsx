@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
+// Fee receipt, preset and verification styles for the GenLayer Transaction Kit
+// React adapter used by the transaction surfaces.
+import '@genlayer/transaction-kit-react/styles.css';
 export const metadata: Metadata = {
   title: 'ProofDesk | Research with receipts',
   description:

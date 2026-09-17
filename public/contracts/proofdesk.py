@@ -1,10 +1,10 @@
-# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
+# { "Depends": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng" }
 """ProofDesk: bounded, source-grounded research review and testnet escrow.
 
 Each validator fetches evidence and judges independently. Only decision fields
 must match. Missing evidence never counts as support. See docs/ARCHITECTURE.md.
 """
-from genlayer import *
+import genlayer as gl
 import json
 import re
 import html
@@ -53,10 +53,10 @@ class _Recipient:
     class Write:
         pass
 
-class ProofDesk(gl.Contract):
-    jobs: TreeMap[str, str]
-    history: TreeMap[str, str]
-    ids: DynArray[str]
+class ProofDesk(gl.contract.Contract):
+    jobs: gl.storage.TreeMap[str, str]
+    history: gl.storage.TreeMap[str, str]
+    ids: gl.storage.DynArray[str]
 
     def __init__(self):
         pass
@@ -203,7 +203,7 @@ INPUT_JSON: """ + json.dumps({"title": title, "criteria": requirements, "claims"
             independent = evaluate()
             return _fingerprint(independent) == _fingerprint(leader.calldata)
 
-        review = gl.vm.run_nondet_unsafe(evaluate, validate)
+        review = gl.vm.run_nondet(evaluate, validate)
         job["review"] = review
         job["status"] = review["decision"]
         self._save(job)
@@ -219,9 +219,9 @@ INPUT_JSON: """ + json.dumps({"title": title, "criteria": requirements, "claims"
         job["paid"] = True
         job["status"] = "paid"
         self._save(job)
-        amount = u256(int(job["bounty_wei"]))
+        amount = gl.u256(int(job["bounty_wei"]))
         if amount > 0:
-            _Recipient(Address(job["researcher"])).emit_transfer(value=amount)
+            _Recipient(gl.Address(job["researcher"])).emit_transfer(value=amount)
 
     @gl.public.write
     def refund_expired(self, job_id: str) -> None:
@@ -234,9 +234,9 @@ INPUT_JSON: """ + json.dumps({"title": title, "criteria": requirements, "claims"
             raise gl.vm.UserError("Refund is not available")
         job["status"] = "refunded"
         self._save(job)
-        amount = u256(int(job["bounty_wei"]))
+        amount = gl.u256(int(job["bounty_wei"]))
         if amount > 0:
-            _Recipient(Address(job["owner"])).emit_transfer(value=amount)
+            _Recipient(gl.Address(job["owner"])).emit_transfer(value=amount)
 
     @gl.public.view
     def get_brief(self, job_id: str) -> str:

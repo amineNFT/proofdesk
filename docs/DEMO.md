@@ -12,7 +12,7 @@
 8. Submit and request another review. The expected decision is **Approved**. Investigate an inconclusive result rather than substituting a local verdict.
 9. Open **Review record**, load revision history, and export the Markdown receipt. Reload and reconnect to find the record under **My briefs**.
 
-The community interface contains no simulated reviews. Each action submits a real test-network transaction. Allow time for finalization before continuing.
+The community interface contains no simulated reviews. Each action submits a real test-network transaction. Allow time for finalization before continuing. Every write is quoted first, so the demo also shows the fee receipt (deposit, and consumed/refunded once finalized); the network's test tokens come from the 💧 faucet in the account selector at <https://studio-dev.genlayer.com/>.
 
 ## Live contract walkthrough
 

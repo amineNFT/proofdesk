@@ -7,7 +7,7 @@ QUOTE = "All of the code and documentation in SQLite has been dedicated to the p
 @pytest.fixture
 def desk(direct_vm, direct_deploy, direct_bob):
     direct_vm.warp("2026-09-09T12:00:00Z")
-    contract = direct_deploy("contracts/proofdesk.py", sdk_version="v0.2.16")
+    contract = direct_deploy("contracts/proofdesk.py", sdk_version="v0.6.0-rc5")
     contract.create_brief("test-001", "Check the SQLite license", json.dumps(["State whether SQLite requires a license fee."]), "0x" + direct_bob.hex(), 7)
     return contract
 
@@ -15,10 +15,19 @@ def submit(desk, vm, researcher, claim="SQLite does not require a license fee.",
     with vm.prank(researcher):
         desk.submit_report("test-001", json.dumps([{"text": claim, "url": url}]))
 
+def mocked_json(value) -> str:
+    """Encode a mock LLM reply the way this gltest RC hands it to the v0.6 SDK.
+
+    gltest json-parses a mock string before returning it, while the v0.6 SDK
+    json-parses the returned text itself. Double-encoding keeps the model reply
+    as text through the first parse, so the contract still receives JSON text.
+    """
+    return json.dumps(json.dumps(value))
+
 def mock_review(vm, verdict="supported", scope="met", quote=QUOTE, status=200):
     vm.mock_web(r"sqlite\.org", {"status": status, "body": QUOTE})
-    vm.mock_llm(r"PROOFDESK_CLAIM_REVIEW", {"verdict": verdict, "quote": quote, "reason": "The page states its licensing terms."})
-    vm.mock_llm(r"PROOFDESK_SCOPE_REVIEW", {"criteria": [{"verdict": scope, "reason": "The license question is addressed."}]})
+    vm.mock_llm(r"PROOFDESK_CLAIM_REVIEW", mocked_json({"verdict": verdict, "quote": quote, "reason": "The page states its licensing terms."}))
+    vm.mock_llm(r"PROOFDESK_SCOPE_REVIEW", mocked_json({"criteria": [{"verdict": scope, "reason": "The license question is addressed."}]}))
 
 def state(desk):
     return json.loads(desk.get_brief("test-001"))

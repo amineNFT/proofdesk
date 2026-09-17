@@ -1,12 +1,13 @@
 import { createClient, createAccount } from 'genlayer-js';
-import { studionet } from 'genlayer-js/chains';
-import { TransactionStatus, TransactionHashVariant } from 'genlayer-js/types';
+import { studioDevnet } from 'genlayer-js/chains';
+import { TransactionHashVariant } from 'genlayer-js/types';
 import { readFile, writeFile } from 'node:fs/promises';
+import { describeFee, quote } from './fees.mjs';
 const deployment = JSON.parse(await readFile('lib/deployment.json', 'utf8'));
 const account = createAccount(
   (await readFile('.keys/studio.key', 'utf8')).trim(),
 );
-const client = createClient({ chain: studionet, account });
+const client = createClient({ chain: studioDevnet, account });
 let run;
 try {
   run = JSON.parse(await readFile('.keys/funded-test-state.json', 'utf8'));
@@ -17,13 +18,24 @@ async function save() {
   await writeFile('.keys/funded-test-state.json', JSON.stringify(run, null, 2));
 }
 if (!run.funded) {
-  console.log('Funding the new test account with simulator-only units.');
-  await client.request({
-    method: 'sim_fundAccount',
-    params: [account.address, 1000000],
-  });
-  run.funded = true;
-  await save();
+  // Studio Next funds accounts from the faucet (the account selector at
+  // studio-dev.genlayer.com), and charges a fee deposit on every write. The
+  // simulator method that funded the old Studionet account is kept as a
+  // best-effort path for a local Studio.
+  try {
+    await client.request({
+      method: 'sim_fundAccount',
+      params: [account.address, 1000000],
+    });
+    run.funded = true;
+    await save();
+  } catch (error) {
+    console.log(
+      `Simulator funding is unavailable (${error?.message ?? error}). ` +
+        'Fund this account from the Studio Next faucet, then re-run.',
+    );
+    process.exit(2);
+  }
 }
 console.log(
   `Test account balance: ${await client.getBalance({ address: account.address })}`,
@@ -31,6 +43,17 @@ console.log(
 async function step(name, args, value = 0n) {
   let entry = run.steps[name];
   if (!entry) {
+    const { estimate, feeArgs } = await quote(
+      studioDevnet,
+      {
+        kind: 'write',
+        address: deployment.contract,
+        method: name,
+        args,
+      },
+      { userValue: value },
+    );
+    console.log(`${name} fee: ${describeFee(estimate)}`);
     entry = {
       hash: await client.writeContract({
         address: deployment.contract,
@@ -38,6 +61,7 @@ async function step(name, args, value = 0n) {
         args,
         value,
         leaderOnly: false,
+        ...feeArgs,
       }),
     };
     run.steps[name] = entry;
@@ -47,7 +71,7 @@ async function step(name, args, value = 0n) {
   if (entry.complete) return;
   const r = await client.waitForTransactionReceipt({
     hash: entry.hash,
-    status: TransactionStatus.FINALIZED,
+    waitUntil: 'finalized',
     interval: 5000,
     retries: 24,
   });
@@ -121,7 +145,7 @@ await writeFile(
   'docs/evidence/studio-funded-run.json',
   JSON.stringify(
     {
-      network: 'studionet',
+      network: 'studioDevnet',
       contract: deployment.contract,
       jobId: run.jobId,
       budgetWei: '100',

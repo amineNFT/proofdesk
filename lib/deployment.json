@@ -1,5 +1,5 @@
 {
-  "network": "studionet",
-  "contract": "0x27b3cC58eE16499EEFcdc593e8300D973a608abF",
-  "transaction": "0x7794a05048ab644c6241f571ad30ca7a56029ca1fa5da838287b222a24ffb467"
+  "network": "studioDevnet",
+  "contract": "",
+  "transaction": ""
 }

@@ -24,7 +24,7 @@ The contested decision is whether natural-language research satisfies a brief an
 
 The walkthrough starts with an incorrect claim that SQLite requires a paid commercial license. The cited page says the deliverable library is in the public domain. ProofDesk flags the contradiction. The researcher corrects it, requests a new review, and becomes eligible to claim a funded budget. Contract tests also cover insufficient evidence when a source cannot be retrieved.
 
-The community app contains no built-in samples or simulated verdicts. The live Studio sequence passed: rejection, corrected revision, approval, and payment claim. A separate funded run observed delivery of a 100-wei simulator-token deposit. Contract addresses, transaction hashes, and balance observations are recorded in `docs/evidence/studio-run.json` and `docs/evidence/studio-funded-run.json`.
+The community app contains no built-in samples or simulated verdicts. A live Studio sequence passed on the earlier Studionet environment: rejection, corrected revision, approval, and payment claim, with a separate funded run observing delivery of a 100-wei simulator-token deposit. Those records are kept in `docs/evidence/`, and they are pre-migration: the Studio Next deployment required for this submission must regenerate them (`docs/evidence/README.md`).
 
 ## Implementation
 
@@ -32,11 +32,19 @@ React and TypeScript research desk; Python Intelligent Contract; GenLayer JS wal
 
 ## Deployment
 
-Contract and network: see `lib/deployment.json`.
+Network: **Studio Next** — the environment the hackathon requires. It is the
+consensus v0.6 preview, chain **61997**, canonical RPC
+`https://studio-dev.genlayer.com/api` (the announcement's
+`studio-next.genlayer.com/api` is the same environment). The app, the contract
+runner and the test toolchain are pinned to the v0.6 release-candidate family.
+
+Contract and network: see `lib/deployment.json`. The previous Studionet (61999)
+address does not exist on Studio Next, so the contract is redeployed there and
+the recorded integration evidence must be regenerated (`docs/evidence/README.md`).
 
 ## Current limits
 
-The source allowlist focuses on official developer documentation. A quoted source can itself be wrong. Model disagreement can delay or prevent a decision. The contract is unaudited. Studio validation, including the observed simulator-token transfer, does not establish Bradbury compatibility or production readiness.
+The source allowlist focuses on official developer documentation. A quoted source can itself be wrong. Model disagreement can delay or prevent a decision. The contract is unaudited. Studio Next is a release-candidate environment that may reset, and its fee accounting can change; validation there, including any observed simulator-token transfer, does not establish Bradbury compatibility or production readiness.
 
 ## Submission checklist
 

@@ -1,16 +1,16 @@
 // Tests the app's EIP-1193 signing path, not a browser-extension UI.
 import { readFile, writeFile } from 'node:fs/promises';
 import { createAccount, createClient } from 'genlayer-js';
-import { studionet } from 'genlayer-js/chains';
+import { studioDevnet } from 'genlayer-js/chains';
 import { walletClient, send, track, readJob } from '../lib/chain.ts';
 const deployment = JSON.parse(await readFile('lib/deployment.json', 'utf8'));
-const config = { network: 'studionet', contract: deployment.contract };
+const config = { network: 'studioDevnet', contract: deployment.contract };
 const account = createAccount(
   (await readFile('.keys/studio.key', 'utf8')).trim(),
 );
-const rpc = createClient({ chain: studionet });
+const rpc = createClient({ chain: studioDevnet });
 const methods = new Set();
-const chainId = `0x${studionet.id.toString(16)}`;
+const chainId = `0x${studioDevnet.id.toString(16)}`;
 const provider = {
   request: async ({ method, params }) => {
     methods.add(method);
@@ -21,7 +21,7 @@ const provider = {
       const tx = params[0];
       if (
         tx.from.toLowerCase() !== account.address.toLowerCase() ||
-        BigInt(tx.chainId) !== BigInt(studionet.id)
+        BigInt(tx.chainId) !== BigInt(studioDevnet.id)
       )
         throw new Error('Wrong signer or chain');
       const serializedTransaction = await account.signTransaction({
@@ -31,7 +31,7 @@ const provider = {
         nonce: Number(BigInt(tx.nonce)),
         gas: BigInt(tx.gas),
         gasPrice: BigInt(tx.gasPrice),
-        chainId: studionet.id,
+        chainId: studioDevnet.id,
         type: 'legacy',
       });
       return rpc.sendRawTransaction({ serializedTransaction });
@@ -94,11 +94,13 @@ await writeFile(
   'docs/evidence/studio-wallet-run.json',
   JSON.stringify(
     {
-      network: 'studionet',
+      network: 'studioDevnet',
       contract: config.contract,
       jobId: run.jobId,
       validation:
         'Actual app wallet client with an EIP-1193 test signer; no browser extension UI was exercised.',
+      feePath:
+        'Fees are quoted through the Transaction Kit and submitted with the write.',
       completedAt: new Date().toISOString(),
       methods: [...methods],
       steps: run.steps,

@@ -1,7 +1,8 @@
 import { createClient, createAccount, generatePrivateKey } from 'genlayer-js';
-import { studionet } from 'genlayer-js/chains';
-import { TransactionStatus, TransactionHashVariant } from 'genlayer-js/types';
+import { studioDevnet } from 'genlayer-js/chains';
+import { TransactionHashVariant } from 'genlayer-js/types';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { describeFee, quote } from './fees.mjs';
 await mkdir('.keys', { recursive: true });
 await mkdir('artifacts', { recursive: true });
 let key;
@@ -12,8 +13,8 @@ try {
   await writeFile('.keys/studio.key', key, { mode: 0o600 });
 }
 const account = createAccount(key);
-const client = createClient({ chain: studionet, account });
-console.log(`Studio test account: ${account.address}`);
+const client = createClient({ chain: studioDevnet, account });
+console.log(`Studio Next test account: ${account.address}`);
 console.log(`RPC chain ID: ${await client.getChainId()}`);
 const code = await readFile('contracts/proofdesk.py');
 console.log('Validating contract schema...');
@@ -28,10 +29,20 @@ try {
   pending = JSON.parse(await readFile('.keys/deploy-state.json', 'utf8'));
 } catch {}
 if (!pending) {
+  const { estimate, feeArgs } = await quote(studioDevnet, {
+    kind: 'deploy',
+    // Fee estimation reads the live policy; it does not compile the contract,
+    // so the source itself is sent with the real deploy below.
+    code: '',
+    args: [],
+    leaderOnly: false,
+  });
+  console.log(`Deploy fee: ${describeFee(estimate)}`);
   const hash = await client.deployContract({
     code: new Uint8Array(code),
     args: [],
     leaderOnly: false,
+    ...feeArgs,
   });
   pending = { hash };
   await writeFile('.keys/deploy-state.json', JSON.stringify(pending));
@@ -39,7 +50,7 @@ if (!pending) {
 } else console.log(`Tracking existing deployment: ${pending.hash}`);
 const receipt = await client.waitForTransactionReceipt({
   hash: pending.hash,
-  status: TransactionStatus.FINALIZED,
+  waitUntil: 'finalized',
   interval: 5000,
   retries: 24,
 });
@@ -65,7 +76,7 @@ const version = await client.readContract({
 if (version !== 'proofdesk/1.0')
   throw new Error('Deployed contract version check failed.');
 const deployment = {
-  network: 'studionet',
+  network: 'studioDevnet',
   contract: address,
   transaction: pending.hash,
 };

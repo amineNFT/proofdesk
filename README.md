@@ -8,7 +8,7 @@ Built for Agent Tank 2026.
 
 The community app starts with an empty workspace. Create a brief or connect your wallet to load work you requested or were assigned. **Community** shows public network records. Built-in sample cases and simulated verdicts are confined to test fixtures and are not shipped in the interface.
 
-For a real review, click **Connect wallet** and choose your installed Ethereum wallet, including Rabby or MetaMask. Discovery uses EIP-6963 with a legacy injected-provider fallback. Connection, network setup, and transaction signing use standard wallet requests; no MetaMask Snap is requested. The wallet must support the selected GenLayer network and Ethereum transaction signing. Open **Network settings** and use the Studio contract in `lib/deployment.json`. Load network briefs to inspect existing records. Create a brief, assign a researcher address, post it, submit the researcher's report, and request a review. A zero budget is supported for testing.
+For a real review, click **Connect wallet** and choose your installed Ethereum wallet, including Rabby or MetaMask. Discovery uses EIP-6963 with a legacy injected-provider fallback. Connection, network setup, and transaction signing use standard wallet requests; no MetaMask Snap is requested. The wallet must support the selected GenLayer network and Ethereum transaction signing. Open **Network settings** to pick **Studio Next** and the contract address in `lib/deployment.json`. Each write is quoted first: the network charges a fee deposit (GEN), which is refunded for whatever the transaction does not consume. Load network briefs to inspect existing records. Create a brief, assign a researcher address, post it, submit the researcher's report, and request a review. A zero budget is supported for testing.
 
 ## What is implemented
 
@@ -67,20 +67,28 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pytest -p no:cacheprovider
 ```
 
-Tests use the official `genlayer-test` direct-mode runner and pin GenVM v0.2.16. The first run downloads that runtime from the official GenVM releases. `tests/contracts/conftest.py` contains a Windows-only compatibility fix for the test runner's open-stdin temporary-file cleanup. It does not replace contract execution or validation logic.
+Tests use the official `genlayer-test` runner (0.30.0rc2, the v0.6-compatible prerelease) in direct mode and pin GenVM v0.6.0-rc5. The first run downloads that runtime from the official GenVM releases. `tests/contracts/conftest.py` contains a Windows-only compatibility fix for the test runner's open-stdin temporary-file cleanup. It does not replace contract execution or validation logic.
 
 ## Deploy and exercise the contract
 
+Studio Next charges a fee deposit on every deploy and write, so **fund the test
+account from the faucet first**: open <https://studio-dev.genlayer.com/>, use the
+account selector's 💧 button, and note the address the deployment script prints.
+
 ```sh
-node scripts/deploy-studio.mjs
+npm run estimate-fees                   # read-only: quote the current deposits
+node scripts/deploy-studio.mjs          # deploy to Studio Next (chain 61997)
 node scripts/test-studio.mjs
 node scripts/test-funded-studio.mjs
 node --experimental-strip-types scripts/test-wallet-studio.mjs
 ```
 
-These commands publish code and sample records to GenLayer Studio. The deployment command creates a test-only account under ignored `.keys/`, validates the schema, saves the transaction ID before polling, and updates `lib/deployment.json` after a successful version read-back. Re-running either script resumes recorded transactions instead of blindly submitting duplicates. Never commit `.keys/` or use its test account for assets of value.
+`npm run estimate-fees` signs nothing and sends nothing — it prints the live
+deposit for a deploy and for each write. Run it before spending GEN.
 
-The first integration script checks an incorrect SQLite claim, a corrected revision, and a zero-budget payment claim. The funded script uses Studio's simulator faucet, deposits 100 test wei, and checks the recipient balance after payout. Both sequences passed on September 9, 2026; transaction hashes and results are in `docs/evidence/studio-run.json` and `docs/evidence/studio-funded-run.json`. The funded run observed the 100-wei transfer. These are simulator tokens with no monetary value.
+These commands publish code and sample records to Studio Next. The deployment command creates a test-only account under ignored `.keys/`, validates the schema, saves the transaction ID before polling, and updates `lib/deployment.json` after a successful version read-back. Re-running either script resumes recorded transactions instead of blindly submitting duplicates. Never commit `.keys/` or use its test account for assets of value.
+
+The first integration script checks an incorrect SQLite claim, a corrected revision, and a zero-budget payment claim. The funded script deposits 100 test wei and checks the recipient balance after payout. The recorded sequences in `docs/evidence/` were produced on the previous Studionet (61999) environment before this migration; see `docs/evidence/README.md`. Studio Next runs must be re-executed and the evidence regenerated there. These are simulator tokens with no monetary value.
 
 For wallet-owned deployments, use **Deploy a new contract** in the app's network settings. The public Python source is copied from `contracts/proofdesk.py` before each build.
 
@@ -88,7 +96,27 @@ The wallet integration test uses the actual app client with an EIP-1193 test sig
 
 ## Compatibility
 
-The project pins `genlayer-js` 1.1.8, the stable SDK used for its Studio deployment. It exposes that SDK's Studio and Bradbury chain definitions. The newer Consensus v0.6 preview requires its matching SDK release candidate and fee-policy integration; do not point this client at a preview RPC under an old chain definition. Bradbury deployment and transfers require separate validation.
+The project pins the Consensus v0.6 release-candidate family: `genlayer-js`
+2.0.0-rc.1, `@genlayer/transaction-kit` 0.1.0-rc.2 and its React adapter at the
+same version, `genlayer-test` 0.30.0rc2, and GenVM v0.6.0-rc5 with the
+`py-genlayer` runner declared in the contract header. Versions are pinned
+exactly: a prerelease tag must be installed explicitly, because npm `latest` does
+not resolve to the release candidate.
+
+The app targets **Studio Next** (`studioDevnet`, chain 61997,
+`https://studio-dev.genlayer.com/api`) and keeps Bradbury as a secondary network.
+Writes are quoted before signing: allocation parameters come from the committed
+`lib/fee-profile.json`, prices and caps are read live, and the returned
+`distribution` and `feeValue` are submitted unchanged. A quote whose live price
+caps no longer match is refused instead of signed. The deposit, the consumed
+amount and the refund are reported separately once a transaction finalizes.
+
+`lib/fee-profile.json` currently carries no measured allocations, so quotes are
+labelled `network-default`. Regenerate it with `npm run test:fees` once
+Studio-mode tests exist that exercise each method; allocations are only ever
+measured from tests, never invented.
+
+Bradbury deployment and transfers require separate validation.
 
 ## Review policy and limits
 

@@ -1,13 +1,14 @@
 import { createClient, createAccount } from 'genlayer-js';
-import { studionet } from 'genlayer-js/chains';
-import { TransactionStatus, TransactionHashVariant } from 'genlayer-js/types';
+import { studioDevnet } from 'genlayer-js/chains';
+import { TransactionHashVariant } from 'genlayer-js/types';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { describeFee, quote } from './fees.mjs';
 const deployment = JSON.parse(await readFile('lib/deployment.json', 'utf8'));
 if (!deployment.contract) throw new Error('Deploy the contract first.');
 const account = createAccount(
   (await readFile('.keys/studio.key', 'utf8')).trim(),
 );
-const client = createClient({ chain: studionet, account });
+const client = createClient({ chain: studioDevnet, account });
 let run;
 try {
   run = JSON.parse(await readFile('.keys/studio-test-state.json', 'utf8'));
@@ -21,6 +22,13 @@ async function persist() {
 async function step(name, functionName, args) {
   let entry = run.steps[name];
   if (!entry) {
+    const { estimate, feeArgs } = await quote(studioDevnet, {
+      kind: 'write',
+      address: deployment.contract,
+      method: functionName,
+      args,
+    });
+    console.log(`${name} fee: ${describeFee(estimate)}`);
     entry = {
       hash: await client.writeContract({
         address: deployment.contract,
@@ -28,6 +36,7 @@ async function step(name, functionName, args) {
         args,
         value: 0n,
         leaderOnly: false,
+        ...feeArgs,
       }),
     };
     run.steps[name] = entry;
@@ -40,7 +49,7 @@ async function step(name, functionName, args) {
   }
   const receipt = await client.waitForTransactionReceipt({
     hash: entry.hash,
-    status: TransactionStatus.FINALIZED,
+    waitUntil: 'finalized',
     interval: 5000,
     retries: 24,
   });
@@ -137,7 +146,7 @@ await writeFile(
   'docs/evidence/studio-run.json',
   JSON.stringify(
     {
-      network: 'studionet',
+      network: 'studioDevnet',
       contract: deployment.contract,
       testAccount: account.address,
       jobId: run.jobId,

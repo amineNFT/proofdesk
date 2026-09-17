@@ -1,6 +1,6 @@
 # Vercel deployment
 
-ProofDesk is a community beta on GenLayer Studio. Hosting the frontend publicly does not move the contract to a production blockchain. All displayed budgets and payments are test tokens.
+ProofDesk is a community beta on GenLayer Studio Next (the consensus v0.6 preview environment, chain 61997). Hosting the frontend publicly does not move the contract to a production blockchain. All displayed budgets and payments are test tokens.
 
 ## Publish
 
@@ -16,7 +16,7 @@ The existing `npm run build` command creates the separate Sites/Cloudflare previ
 ## First community check
 
 - A fresh browser should show an empty research workspace, with no sample reports or fake activity.
-- Connect an Ethereum browser wallet, choose it explicitly, and approve the GenLayer Studio network prompts.
+- Connect an Ethereum browser wallet, choose it explicitly, and approve the GenLayer Studio Next network prompts. The wallet needs GEN on chain 61997: every write reserves a fee deposit, so fund it from the 💧 faucet in the account selector at <https://studio-dev.genlayer.com/> first.
 - Create a brief, assign your own wallet with **Use my connected wallet**, set the budget to `0`, and save the draft.
 - Post the brief, submit a cited report, and request a review. Each action needs a separate wallet confirmation.
 - Wait for finalization, or use **Check status** on the existing transaction if polling times out.

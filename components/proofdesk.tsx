@@ -3,6 +3,7 @@ import { errorMessage } from '@/lib/errors';
 import { filterWorkspace, restoreDrafts } from '@/lib/workspace';
 import {
   discoverWallets,
+  preferredWallet,
   type WalletOption,
   type WalletSession,
 } from '@/lib/wallet';
@@ -119,7 +120,7 @@ export default function ProofDesk() {
     null,
   );
   const [modal, setModal] = useState<
-    'new' | 'edit' | 'network' | 'report' | 'wallet' | null
+    'new' | 'edit' | 'network' | 'report' | null
   >(null);
   const [busy, setBusy] = useState('');
   const [notice, setNotice] = useState('');
@@ -132,6 +133,7 @@ export default function ProofDesk() {
   const [history, setHistory] = useState<Job[]>([]);
   const [reports, setReports] = useState<Record<string, Claim[]>>({});
   const lock = useRef(false);
+  const autoConnect = useRef(false);
   const visibleJobs = filterWorkspace(jobs, wallet, scope, query);
   const job = visibleJobs.find((j) => j.id === selected) ?? visibleJobs[0];
   const stateRef = useRef({ jobs, selected });
@@ -250,6 +252,61 @@ export default function ProofDesk() {
       cleanup();
     };
   }, []);
+  /**
+   * Connect to a detected wallet without a picker. The canonical EIP-6963
+   * announcement wins over a legacy injected provider; the first detected
+   * wallet is the fallback.
+   */
+  async function connectWallet(option?: WalletOption) {
+    const target = option ?? preferredWallet(walletOptions);
+    if (!target) {
+      setError(
+        'No browser wallet was detected. Install Rabby or MetaMask, enable it for this site, and reload.',
+      );
+      return;
+    }
+    await run(`Connecting ${target.name}`, async () => {
+      setWallet('');
+      const connected = await walletClient(config, target.provider);
+      setSelectedWallet(target);
+      setWallet(connected.address);
+      await refresh();
+      setNotice(`Connected ${target.name}: ${short(connected.address)}.`);
+    });
+  }
+  function disconnectWallet() {
+    setWallet('');
+    setSelectedWallet(null);
+    setNotice('Wallet disconnected from ProofDesk.');
+  }
+  // Connect as soon as a wallet is detected. A declined or unavailable request
+  // must not block the workspace, so the reason waits behind the Connect wallet
+  // button instead of filling the page with an error on load.
+  useEffect(() => {
+    if (!ready || wallet || autoConnect.current || !walletOptions.length) return;
+    const target = preferredWallet(walletOptions);
+    if (!target) return;
+    autoConnect.current = true;
+    // Deferred so the connection is not a synchronous state update inside the
+    // effect body; the wallet extension is the external system here.
+    queueMicrotask(() => {
+      void (async () => {
+        setBusy('Connecting wallet');
+        try {
+          const connected = await walletClient(config, target.provider);
+          setSelectedWallet(target);
+          setWallet(connected.address);
+          setNotice(`Connected ${target.name}: ${short(connected.address)}.`);
+        } catch {
+          setNotice(
+            'Wallet connection was not approved. Use Connect wallet when you are ready.',
+          );
+        } finally {
+          setBusy('');
+        }
+      })();
+    });
+  }, [ready, wallet, walletOptions, config]);
   useEffect(() => {
     const provider = selectedWallet?.provider;
     const reset = () => setWallet('');
@@ -480,7 +537,8 @@ export default function ProofDesk() {
           disabled={Boolean(busy)}
           onClick={() => {
             setError('');
-            setModal('wallet');
+            if (wallet) disconnectWallet();
+            else void connectWallet();
           }}
         >
           <Wallet />
@@ -630,7 +688,7 @@ export default function ProofDesk() {
               className="load-briefs"
               disabled={Boolean(busy) || !config.contract}
               onClick={() => {
-                if (scope === 'mine' && !wallet) setModal('wallet');
+                if (scope === 'mine' && !wallet) void connectWallet();
                 else void run('Loading network briefs', () => refresh(more));
               }}
             >
@@ -702,7 +760,7 @@ export default function ProofDesk() {
                   {!wallet && !query && (
                     <Button
                       variant="outline"
-                      onClick={() => setModal('wallet')}
+                      onClick={() => void connectWallet()}
                     >
                       Connect wallet
                     </Button>
@@ -805,7 +863,7 @@ export default function ProofDesk() {
                   <p className="help-text">
                     <button
                       className="text-button"
-                      onClick={() => setModal('wallet')}
+                      onClick={() => void connectWallet()}
                     >
                       Connect your wallet
                     </button>{' '}
@@ -1258,82 +1316,6 @@ export default function ProofDesk() {
           />
         </DialogContent>
       </Dialog>
-      <Dialog
-        open={modal === 'wallet'}
-        onOpenChange={(open) => {
-          if (!open && !busy) setModal(null);
-        }}
-      >
-        <DialogContent className="desk-dialog">
-          <DialogHeader>
-            <DialogTitle>Choose your wallet</DialogTitle>
-            <DialogDescription>
-              Select an installed Ethereum wallet. Your wallet will ask to
-              connect and switch to {networks[config.network].name}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="desk-form">
-            {walletOptions.length ? (
-              walletOptions.map((option) => (
-                <Button
-                  key={option.id}
-                  variant="outline"
-                  disabled={Boolean(busy)}
-                  onClick={() => {
-                    void run(`Connecting ${option.name}`, async () => {
-                      setWallet('');
-                      const connected = await walletClient(
-                        config,
-                        option.provider,
-                      );
-                      setSelectedWallet(option);
-                      setWallet(connected.address);
-                      await refresh();
-                      setNotice(
-                        `Connected ${option.name}: ${short(connected.address)}.`,
-                      );
-                      setModal(null);
-                    });
-                  }}
-                >
-                  <Wallet /> {option.name}
-                </Button>
-              ))
-            ) : (
-              <p>
-                No browser wallet was detected. Enable your wallet extension for
-                this site and reload, or open this link inside an Ethereum
-                wallet’s browser.
-              </p>
-            )}
-            {wallet && (
-              <Button
-                variant="ghost"
-                disabled={Boolean(busy)}
-                onClick={() => {
-                  setWallet('');
-                  setSelectedWallet(null);
-                  setModal(null);
-                  setNotice('Wallet disconnected from ProofDesk.');
-                }}
-              >
-                Disconnect from ProofDesk
-              </Button>
-            )}
-            {busy && <output>{busy} — check your wallet for a request.</output>}
-            <ErrorMessage message={error} />
-            <details className="field-hint">
-              <summary>Network details for manual setup</summary>
-              <p>
-                {networks[config.network].name} · Chain ID{' '}
-                {networks[config.network].id} · Currency{' '}
-                {networks[config.network].nativeCurrency.symbol}
-              </p>
-              <p>RPC: {networks[config.network].rpcUrls.default.http[0]}</p>
-            </details>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
@@ -1612,6 +1594,14 @@ function NetworkForm({
           maxLength={42}
         />
       </label>
+      <details className="field-hint">
+        <summary>Network details for manual setup</summary>
+        <p>
+          {networks[next.network].name} · Chain ID {networks[next.network].id} ·
+          Currency {networks[next.network].nativeCurrency.symbol}
+        </p>
+        <p>RPC: {networks[next.network].rpcUrls.default.http[0]}</p>
+      </details>
       <ErrorMessage message={error} />
       <Button
         disabled={disabled}

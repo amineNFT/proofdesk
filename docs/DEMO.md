@@ -2,7 +2,7 @@
 
 ## Real network walkthrough
 
-1. Click **Connect wallet**, select your Ethereum wallet, and approve the connection and network prompts.
+1. Your installed wallet is detected and asked to connect on load; approve the connection and the Studio Next network prompt. If you declined, press **Connect wallet** in the header.
 2. Click **New brief**. Use the title `SQLite licensing check` and one acceptance criterion: `Explain whether the SQLite library requires a paid license for commercial use.`
 3. Click **Use my connected wallet** to assign yourself as the researcher. Set the budget to `0`, keep seven days, and save the draft.
 4. Click **Post brief to GenLayer** and approve. After finalization, click **Submit report**.

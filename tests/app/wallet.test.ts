@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   prepareWallet,
+  preferredWallet,
   signingProvider,
   discoverWallets,
   type BrowserProvider,
@@ -147,4 +148,47 @@ void test('discovery retains multiple providers, deduplicates announcements, and
   stop();
   announce(fixture().provider, 'c', 'Late wallet');
   assert.equal(current.length, 2);
+});
+void test('the canonical announcement is chosen without a picker', () => {
+  const a = fixture().provider,
+    b = fixture().provider;
+  assert.equal(preferredWallet([]), undefined);
+  assert.equal(
+    preferredWallet([{ id: 'injected:0', name: 'Rabby', provider: a }])
+      ?.provider,
+    a,
+  );
+  // When the same wallet is also announced, the announcement wins.
+  assert.equal(
+    preferredWallet([
+      { id: 'injected:0', name: 'Rabby', provider: a },
+      { id: 'eip6963:1', name: 'Rabby Wallet', provider: b },
+    ])?.provider,
+    b,
+  );
+});
+void test('one extension is not listed as two wallets', () => {
+  const injected = fixture().provider;
+  const announced = fixture().provider;
+  const target = Object.assign(new EventTarget(), { ethereum: injected });
+  let current: { id: string; name: string; provider: BrowserProvider }[] = [];
+  const stop = discoverWallets(target, (wallets) => {
+    current = wallets;
+  });
+  // The legacy injected provider is named "Rabby" from its isRabby flag.
+  assert.equal(current.length, 1);
+  assert.equal(current[0].name, 'Rabby');
+  target.dispatchEvent(
+    new CustomEvent('eip6963:announceProvider', {
+      detail: {
+        info: { uuid: 'rabby', name: 'Rabby Wallet' },
+        provider: announced,
+      },
+    }),
+  );
+  // "Rabby" and "Rabby Wallet" are the same extension: one entry, announcement wins.
+  assert.equal(current.length, 1);
+  assert.equal(current[0].name, 'Rabby Wallet');
+  assert.equal(current[0].provider, announced);
+  stop();
 });

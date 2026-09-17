@@ -20,6 +20,17 @@ export type WalletOption = {
 };
 export type WalletSession = { provider: BrowserProvider; address: string };
 type WalletWindow = EventTarget & { ethereum?: BrowserProvider };
+
+/**
+ * The wallet to connect to without asking. A canonical EIP-6963 announcement is
+ * preferred over a legacy injected provider; the first detected wallet is the
+ * fallback so a single installed extension connects immediately.
+ */
+export function preferredWallet(
+  options: WalletOption[],
+): WalletOption | undefined {
+  return options.find((option) => option.id.startsWith('eip6963:')) ?? options[0];
+}
 export type WalletNetwork = {
   id: number;
   name: string;
@@ -40,14 +51,34 @@ export function discoverWallets(
   const wallets: WalletOption[] = [];
   const add = (provider: BrowserProvider, id: string, name: string) => {
     if (!provider || typeof provider.request !== 'function') return;
+    const announced = id.startsWith('eip6963:');
+    const key = name.toLowerCase().replace(/[^a-z0-9]/g, '');
     const existing = wallets.find((w) => w.provider === provider);
     if (existing) {
-      if (id.startsWith('eip6963:')) {
+      if (announced) {
         existing.id = id;
         existing.name = name;
       }
     } else if (!wallets.some((w) => w.id === id)) {
-      wallets.push({ id, name, provider });
+      // One extension can be reachable both as an EIP-6963 announcement and as
+      // a legacy injected provider ("Rabby" and "Rabby Wallet"), which would
+      // otherwise list the same wallet twice. Compare normalised names.
+      const twin = wallets.find(
+        (w) =>
+          w.id.startsWith('eip6963:') !== announced &&
+          (w.name.toLowerCase().replace(/[^a-z0-9]/g, '').includes(key) ||
+            key.includes(w.name.toLowerCase().replace(/[^a-z0-9]/g, ''))),
+      );
+      if (twin) {
+        // The announcement is the canonical entry point, so it wins.
+        if (announced) {
+          twin.id = id;
+          twin.name = name;
+          twin.provider = provider;
+        }
+      } else {
+        wallets.push({ id, name, provider });
+      }
     }
     update([...wallets]);
   };

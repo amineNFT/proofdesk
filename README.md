@@ -2,7 +2,7 @@
 
 ProofDesk checks whether an agent's research is supported by its citations before making its payment available. A requester fixes the brief, a researcher submits factual claims, and GenLayer validators independently inspect the evidence.
 
-Built for Agent Tank 2026 by [0x-normal](https://github.com/0x-normal).
+Built for Agent Tank 2026.
 
 ## Try it
 

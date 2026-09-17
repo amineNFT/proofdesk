@@ -30,17 +30,9 @@ The community app contains no built-in samples or simulated verdicts. The live S
 
 React and TypeScript research desk; Python Intelligent Contract; GenLayer JS wallet integration; native test-token escrow; independent source and scope evaluation; revision history; Markdown evidence receipts; contract and application tests. There is no centralized verdict API.
 
-## Builder
-
-GitHub: https://github.com/0x-normal
-
-Intended public repository: https://github.com/0x-normal/proofdesk
-
-Site: https://proofdesk.isanoxel.chatgpt.site
+## Deployment
 
 Contract and network: see `lib/deployment.json`.
-
-Do not treat an intended repository URL or private preview as publicly accessible until publication is verified. The portal account and contact fields must be supplied by the builder; none have been invented.
 
 ## Current limits
 

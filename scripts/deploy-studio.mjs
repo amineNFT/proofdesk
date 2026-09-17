@@ -68,7 +68,6 @@ const deployment = {
   network: 'studionet',
   contract: address,
   transaction: pending.hash,
-  repository: 'https://github.com/0x-normal/proofdesk',
 };
 await writeFile(
   'lib/deployment.json',

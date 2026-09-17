@@ -1095,16 +1095,7 @@ export default function ProofDesk() {
           </article>
         </div>
         <footer className="desk-footer">
-          <span>
-            ProofDesk ·{' '}
-            <a
-              href="https://github.com/0x-normal"
-              target="_blank"
-              rel="noreferrer"
-            >
-              0x-normal
-            </a>
-          </span>
+          <span>ProofDesk</span>
           <span>
             <Link href="/method">Method & limits</Link> /{' '}
             <a href="/contracts/proofdesk.py" download>
